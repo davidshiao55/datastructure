@@ -1,0 +1,6 @@
+# ignore all .pdf files
+*.zip
+/slides
+/testcase
+/hw
+.vscode
