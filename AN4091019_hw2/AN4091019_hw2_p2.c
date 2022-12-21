@@ -90,8 +90,12 @@ int main()
             int key, val;
             scanf("%d %d", &key, &val);
             node *n = ht_search(table, key, val);
-            delete (n);
-            ht_delete(table, key, val);
+
+            if (n)
+            {
+                delete (n);
+                ht_delete(table, key, val);
+            }
         }
 
         else if (!strcmp(cmd, "decrease"))
@@ -99,9 +103,13 @@ int main()
             int x, val, y;
             scanf("%d %d %d", &x, &val, &y);
             node *n = ht_search(table, x, val);
-            ht_delete(table, n->key, n->val);
-            decrease(n, y);
-            ht_insert(table, n->key, n->val, n);
+
+            if (n)
+            {
+                ht_delete(table, n->key, n->val);
+                decrease(n, y);
+                ht_insert(table, n->key, n->val, n);
+            }
         }
 
         else if (!strcmp(cmd, "quit"))
@@ -171,7 +179,7 @@ int extract()
 
     /* clean up phase */
 
-    // maxdegree = max degree in root list + log2(numRootList) + 1 (include 0 degree)
+    // maxdegree = max degree in root list + log2(numRootList) + 1 (include 0 degree) < ... + numRootList / 2 + 1
     maxdegree += numRootList / 2 + 1;
 
     node *degreeArray[maxdegree];
@@ -255,7 +263,7 @@ void delete(node *deletenode)
         else
             circularDelete(deletenode);
     }
-    /* case 1 : parent is not marked*/
+    /* case 2 : parent is not marked*/
     else if (!deletenode->parent->childCutFlag)
     {
         deletenode->parent->childCutFlag = true;
@@ -263,8 +271,8 @@ void delete(node *deletenode)
         circularDelete(deletenode);
         insert(deletenode);
     }
-    /* case 2 : parent is marked*/
-    else
+    /* case 3 : parent is marked*/
+    else if (deletenode->parent->childCutFlag)
     {
         node *parent = deletenode->parent;
         deletenode->parent->degree--;
@@ -299,7 +307,7 @@ void decrease(node *n, int y)
         insert(n);
     }
     /* case 3 : heap property violated & parent is marked*/
-    else
+    else if (n->parent->childCutFlag)
     {
         node *parent = n->parent;
         n->parent->degree--;
@@ -321,6 +329,7 @@ void cascadingCut(node *curr)
         }
         else
         {
+            /* stop when reach root List*/
             break;
         }
         circularDelete(curr);
@@ -466,7 +475,7 @@ node *ht_search(hashTable *table, int key, int val)
     }
     if (!ti)
     {
-        printf("search error : key value pair doesn't exist\n");
+        // printf("search error : key value pair doesn't exist\n");
         return NULL;
     }
     return ti->nptr;
@@ -488,7 +497,7 @@ void ht_delete(hashTable *table, int key, int value)
     }
     if (!ti)
     {
-        printf("delete error : key value pair doesn't exist\n");
+        // printf("delete error : key value pair doesn't exist\n");
         return;
     }
 
@@ -501,13 +510,8 @@ void ht_delete(hashTable *table, int key, int value)
 
 int hash(int key)
 {
-    int a = key % CAPACITY;
-    int b = a + 3;
-    int h = a * b % CAPACITY;
-    if (h < 0 || h >= CAPACITY)
-    {
-        fprintf(stderr, "key exceed table capcity\n");
-        exit(EXIT_FAILURE);
-    }
-    return h;
+    key = ((key >> 16) ^ key) * 0x45d9f3b;
+    key = ((key >> 16) ^ key) * 0x45d9f3b;
+    key = (key >> 16) ^ key;
+    return key % CAPACITY;
 }
